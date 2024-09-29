@@ -1,0 +1,2 @@
+# igg
+Idea Generator Generator
