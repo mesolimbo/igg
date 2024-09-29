@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Idea Generator Generator</title>
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
+        }
+        p {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        #title {
+            font-size: 2rem; /* Adjust the size as needed */
+        }
+    </style>
+</head>
+<body>
+    <nav class="green lighten-1" role="navigation">
+        <div class="nav-wrapper container">
+            <a id="title" class="brand-logo flow-text">IGG</a>
+        </div>
+    </nav>
+    <main>
+        <div class="container">
+            <div class="section">
+                <div class="row">
+                    <div class="input-field">
+                        <select id="model-select"></select>
+                        <label for="model-select">Select a Model:</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field">
+                        <input type="text" id="template-input" placeholder="Enter template with $1, $2, ..." style="width: 90%">
+                        <label for="template-input">Template Sentence:</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <a id="generate-button" class="green lighten-1 waves-effect waves-light btn">Generate Ideas</a>
+                </div>
+            </div>
+            <div class="row">
+                <div id="output" class="card-panel z-depth-1"> </div>
+            </div>
+        </div>
+    </main>
+    <footer class="page-footer green lighten-1">
+        <div class="footer-copyright green">
+            <div class="container">&copy; 2024 Idea Generator Generator
+            </div>
+        </div>
+    </footer>
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="script/base.js"></script>
+    <script src="script/markov.js"></script>
+    <script src="script/loader.js"></script>
+</body>
+</html>
