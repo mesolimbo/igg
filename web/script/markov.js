@@ -100,6 +100,11 @@ function generatePhrase(model) {
                 break; // Current word is an end word; phrase is complete
             }
         }
+
+        // Ensure the phrase does not grow too long
+        if (phrase.length >= maxLength) {
+            return generatePhrase(model); // Recurse to generate a new phrase
+        }
     }
 
     // Ensure the last word is an end word
