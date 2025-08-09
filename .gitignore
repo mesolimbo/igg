@@ -166,3 +166,8 @@ cython_debug/
 
 # Custome domain URL
 /web/script/base.js
+
+# Claude MCP
+.claude
+models/cache
+
