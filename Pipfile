@@ -7,6 +7,7 @@ name = "pypi"
 boto3 = "==1.35.29"
 nltk = "==3.9.1"
 pandas = "==2.2.3"
+mcp = "==1.12.4"
 
 [dev-packages]
 coverage = "==7.6.4"
