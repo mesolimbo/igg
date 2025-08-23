@@ -171,3 +171,7 @@ cython_debug/
 .claude
 models/cache
 
+# CDK
+cdk.out/
+cdk/cdk.out/
+cdk/config.json
