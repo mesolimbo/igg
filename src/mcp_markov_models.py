@@ -32,8 +32,35 @@ def ensure_cache_dir():
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def validate_model_name(model_name: str) -> None:
+    """Validate model name to prevent path traversal and other attacks."""
+    if not model_name:
+        raise ValueError("Model name cannot be empty")
+    
+    # Prevent path traversal attacks
+    if '..' in model_name:
+        raise ValueError("Model name cannot contain '..' sequences")
+    
+    # Prevent absolute paths
+    if model_name.startswith('/') or model_name.startswith('\\'):
+        raise ValueError("Model name cannot be an absolute path")
+    
+    # Prevent protocol schemes that could be used for SSRF
+    if '://' in model_name:
+        raise ValueError("Model name cannot contain protocol schemes")
+    
+    # Allow only safe characters: alphanumeric, hyphens, underscores, forward slashes, and dots
+    if not re.match(r'^[a-zA-Z0-9._/-]+$', model_name):
+        raise ValueError("Model name contains invalid characters")
+    
+    # Ensure it has a reasonable length limit
+    if len(model_name) > 200:
+        raise ValueError("Model name is too long")
+
+
 def get_model_cache_path(model_name: str) -> Path:
     """Get local cache path for a model."""
+    validate_model_name(model_name)
     # Extract filename from model path (e.g., "samples/sample.json" -> "sample.json")
     filename = Path(model_name).name
     return CACHE_DIR / filename
@@ -62,9 +89,13 @@ async def list_models() -> Dict[str, Any]:
         ensure_cache_dir()
         cached_models = []
         for model_name in models:
-            cache_path = get_model_cache_path(model_name)
-            if cache_path.exists():
-                cached_models.append(model_name)
+            try:
+                cache_path = get_model_cache_path(model_name)
+                if cache_path.exists():
+                    cached_models.append(model_name)
+            except ValueError:
+                # Skip invalid model names from the index
+                continue
         
         return {
             "base_url": base_url,
@@ -79,6 +110,7 @@ async def list_models() -> Dict[str, Any]:
 
 async def load_model(model_name: str) -> List[Dict[str, Any]]:
     """Load a model, downloading if necessary."""
+    validate_model_name(model_name)
     ensure_cache_dir()
     cache_path = get_model_cache_path(model_name)
     
