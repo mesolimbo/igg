@@ -1,0 +1,2 @@
+# Empty - using only Python standard library
+# All required functionality is implemented using built-in modules

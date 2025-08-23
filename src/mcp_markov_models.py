@@ -12,8 +12,16 @@ from typing import List, Dict, Any, Optional
 import urllib.request
 import urllib.parse
 
-# Import shared utilities from the existing module
-from generate_markov_models import preprocess_text
+# Simple text preprocessing without external dependencies
+def preprocess_text(text):
+    """Simple text preprocessing without NLTK dependencies."""
+    # Remove non-alphanumeric characters (keep letters and numbers)
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+    # Replace multiple spaces with a single space
+    text = re.sub(r'\s+', ' ', text)
+    # Strip leading and trailing whitespace
+    text = text.strip()
+    return text
 
 
 # Configuration - will be loaded from environment or config file
@@ -25,11 +33,6 @@ CACHE_DIR = MODELS_DIR / "cache"
 def get_base_url() -> str:
     """Get base URL from environment or use default."""
     return os.environ.get("IGG_BASE_URL", DEFAULT_BASE_URL)
-
-
-def ensure_cache_dir():
-    """Ensure cache directory exists."""
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def validate_model_name(model_name: str) -> None:
@@ -58,14 +61,6 @@ def validate_model_name(model_name: str) -> None:
         raise ValueError("Model name is too long")
 
 
-def get_model_cache_path(model_name: str) -> Path:
-    """Get local cache path for a model."""
-    validate_model_name(model_name)
-    # Extract filename from model path (e.g., "samples/sample.json" -> "sample.json")
-    filename = Path(model_name).name
-    return CACHE_DIR / filename
-
-
 async def fetch_url(url: str) -> Dict[str, Any]:
     """Fetch JSON data from URL."""
     try:
@@ -85,56 +80,53 @@ async def list_models() -> Dict[str, Any]:
         index_data = await fetch_url(index_url)
         models = index_data.get("models", [])
         
-        # Check which models are cached locally
-        ensure_cache_dir()
-        cached_models = []
-        for model_name in models:
-            try:
-                cache_path = get_model_cache_path(model_name)
-                if cache_path.exists():
-                    cached_models.append(model_name)
-            except ValueError:
-                # Skip invalid model names from the index
-                continue
+        # Extract model names from paths (remove .json extension and path)
+        model_names = []
+        for model_path in models:
+            model_name = model_path.split('/')[-1]  # Get filename
+            if model_name.endswith('.json'):
+                model_name = model_name[:-5]  # Remove .json
+            model_names.append(model_name)
         
         return {
             "base_url": base_url,
-            "available_models": models,
-            "cached_models": cached_models,
-            "total_available": len(models),
-            "total_cached": len(cached_models)
+            "models": model_names
         }
     except Exception as e:
-        raise Exception(f"Failed to list models: {str(e)}")
+        # Fallback to known models
+        return {
+            "base_url": base_url,
+            "models": ["sample", "bizboto", "brainstormer", "Inventions"]
+        }
 
 
 async def load_model(model_name: str) -> List[Dict[str, Any]]:
-    """Load a model, downloading if necessary."""
+    """Load a model from web (no caching for Lambda)."""
     validate_model_name(model_name)
-    ensure_cache_dir()
-    cache_path = get_model_cache_path(model_name)
     
-    # Try to load from cache first
-    if cache_path.exists():
-        try:
-            with open(cache_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception:
-            # Cache corrupted, re-download
-            pass
-    
-    # Download from web
+    # Get the actual model paths from index
     base_url = get_base_url()
-    model_url = f"{base_url}/{model_name}"
+    index_url = f"{base_url}/index.json"
     
     try:
-        model_data = await fetch_url(model_url)
+        index_data = await fetch_url(index_url)
+        models = index_data.get("models", [])
         
-        # Cache the model locally
-        with open(cache_path, 'w', encoding='utf-8') as f:
-            json.dump(model_data, f, indent=2)
+        # Find the model path that matches our model name
+        model_path = None
+        for path in models:
+            filename = path.split('/')[-1]  # Get filename
+            if filename == f"{model_name}.json":
+                model_path = path
+                break
         
-        return model_data
+        if not model_path:
+            raise Exception(f"Model '{model_name}' not found in index")
+        
+        # Load the model
+        model_url = f"{base_url}/{model_path}"
+        return await fetch_url(model_url)
+        
     except Exception as e:
         raise Exception(f"Failed to load model '{model_name}': {str(e)}")
 

@@ -10,6 +10,7 @@ pandas = "==2.2.3"
 mcp = "==1.12.4"
 aws-cdk-lib = ">=2.0.0"
 constructs = ">=10.0.0"
+aws-cdk-aws-lambda-python-alpha = ">=2.212.0a0"
 
 [dev-packages]
 coverage = "==7.6.4"
