@@ -30,7 +30,48 @@ async def handle_mcp_request(body: dict):
         method = body.get('method')
         params = body.get('params', {})
         
-        if method == 'tools/list':
+        if method == 'initialize':
+            # MCP initialization handshake
+            return {
+                "jsonrpc": "2.0",
+                "id": body.get('id'),
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {},
+                        "logging": {},
+                        "prompts": {},
+                        "resources": {}
+                    },
+                    "serverInfo": {
+                        "name": "IGG MCP Server",
+                        "version": "1.0.0"
+                    }
+                }
+            }
+        
+        elif method == 'notifications/initialized':
+            # Acknowledge initialization complete - notification has no response
+            if body.get('id') is None:
+                # This is a notification, no response needed
+                return None
+            return {
+                "jsonrpc": "2.0",
+                "id": body.get('id'),
+                "result": {}
+            }
+        
+        elif method == 'ping':
+            # Health check ping
+            return {
+                "jsonrpc": "2.0",
+                "id": body.get('id'),
+                "result": {
+                    "status": "ok"
+                }
+            }
+        
+        elif method == 'tools/list':
             # List available tools
             tools = [
                 {
@@ -189,6 +230,9 @@ def lambda_handler(event, context):
         asyncio.set_event_loop(loop)
         try:
             result = loop.run_until_complete(handle_mcp_request(body))
+            if result is None:
+                # This was a notification with no response
+                return create_response(200, {})
             return create_response(200, result)
         finally:
             loop.close()

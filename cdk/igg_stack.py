@@ -7,9 +7,12 @@ from aws_cdk import (
     aws_apigateway as apigateway,
     aws_secretsmanager as secretsmanager,
     aws_certificatemanager as acm,
+    aws_iam as iam,
     RemovalPolicy,
     CfnOutput,
-    Tags
+    Tags,
+    CustomResource,
+    custom_resources as cr
 )
 from constructs import Construct
 
@@ -40,13 +43,14 @@ class IggStack(Stack):
             removal_policy=RemovalPolicy.DESTROY
         )
 
-        # Create the Lambda function
+        # Create the Lambda function (no layers needed for simplified version)
         lambda_function = lambda_.Function(
             self, "IggMcpFunction",
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="lambda_handler.lambda_handler",
             code=lambda_.Code.from_asset("../src"),
-            timeout=Duration.seconds(30),
+            timeout=Duration.seconds(60),
+            memory_size=512,
             environment={
                 "AUTH_SECRET_ARN": auth_secret.secret_arn
             }
@@ -68,27 +72,83 @@ class IggStack(Stack):
         auth_secret.grant_read(lambda_function)
         auth_secret.grant_read(authorizer_function)
 
-        # Create SSL certificate with DNS validation
-        certificate = acm.Certificate(
-            self, "McpIggCertificate",
-            domain_name=certificate_domain,
-            validation=acm.CertificateValidation.from_dns()
+        # Create SSL certificate with DNS validation in us-east-1 (required for API Gateway Edge)
+        # Use custom resource to create certificate in us-east-1 regardless of stack region
+        certificate_handler = lambda_.Function(
+            self, "CertificateHandler",
+            runtime=lambda_.Runtime.PYTHON_3_11,
+            handler="index.handler",
+            code=lambda_.Code.from_inline("""
+import boto3
+import json
+
+def handler(event, context):
+    request_type = event['RequestType']
+    
+    if request_type == 'Create':
+        acm_client = boto3.client('acm', region_name='us-east-1')
+        response = acm_client.request_certificate(
+            DomainName=event['ResourceProperties']['DomainName'],
+            ValidationMethod='DNS'
         )
+        return {
+            'Data': {
+                'CertificateArn': response['CertificateArn']
+            }
+        }
+    elif request_type == 'Delete':
+        # Certificate deletion will be handled automatically by CloudFormation
+        return {}
+    else:
+        return {}
+"""),
+            timeout=Duration.minutes(5)
+        )
+        
+        # Add IAM permissions for ACM operations
+        certificate_handler.add_to_role_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "acm:RequestCertificate",
+                    "acm:DescribeCertificate",
+                    "acm:DeleteCertificate"
+                ],
+                resources=["*"]
+            )
+        )
+        
+        certificate_provider = cr.Provider(
+            self, "CertificateProvider",
+            on_event_handler=certificate_handler
+        )
+        
+        certificate_resource = CustomResource(
+            self, "CrossRegionCertificate",
+            service_token=certificate_provider.service_token,
+            properties={
+                'DomainName': certificate_domain
+            }
+        )
+        
+        certificate_arn = certificate_resource.get_att_string('CertificateArn')
 
         # Create custom domain for API Gateway
         custom_domain = apigateway.DomainName(
             self, "McpIggDomain",
             domain_name=domain_name,
-            certificate=certificate,
+            certificate=acm.Certificate.from_certificate_arn(
+                self, "ImportedCertificate", 
+                certificate_arn
+            ),
             endpoint_type=apigateway.EndpointType.EDGE,
             security_policy=apigateway.SecurityPolicy.TLS_1_2
         )
 
         # Create Lambda authorizer
-        auth = apigateway.RequestAuthorizer(
+        auth = apigateway.TokenAuthorizer(
             self, "IggBasicAuthorizer",
             handler=authorizer_function,
-            identity_sources=[apigateway.IdentitySource.header('Authorization')],
             authorizer_name="BasicAuthAuthorizer",
             results_cache_ttl=Duration.seconds(300)  # Cache for 5 minutes
         )

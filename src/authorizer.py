@@ -8,9 +8,14 @@ from botocore.exceptions import ClientError
 def lambda_handler(event, context):
     """Lambda authorizer for API Gateway basic authentication."""
     
+    # Debug logging - log the entire event structure
+    print(f"Authorizer event: {json.dumps(event, default=str)}")
+    
     try:
         # Extract the authorization token from the event
+        # For TokenAuthorizer, it's in event['authorizationToken']
         auth_token = event.get('authorizationToken')
+        
         if not auth_token or not auth_token.startswith('Basic '):
             return generate_policy('user', 'Deny', event['methodArn'])
         
