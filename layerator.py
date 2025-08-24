@@ -35,13 +35,13 @@ def main():
     python_dir.mkdir(parents=True, exist_ok=True)
     print(f"Created directory: {python_dir}")
     
-    # Install dependencies
-    print(f"Installing dependencies from {requirements_file}")
+    # Install dependencies with proper dependency resolution
+    print(f"Installing dependencies from {requirements_file} with full dependency resolution...")
     cmd = [
         sys.executable, "-m", "pip", "install",
         "-r", str(requirements_file),
         "-t", str(python_dir),
-        "--no-deps"  # Avoid dependency conflicts by not installing sub-dependencies
+        "--upgrade"
     ]
     
     try:
@@ -52,25 +52,6 @@ def main():
             print(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"ERROR: Failed to install dependencies: {e}")
-        if e.stderr:
-            print("Error output:")
-            print(e.stderr)
-        sys.exit(1)
-    
-    # Install dependencies with their dependencies (second pass)
-    print("Installing dependencies with sub-dependencies...")
-    cmd_with_deps = [
-        sys.executable, "-m", "pip", "install",
-        "-r", str(requirements_file),
-        "-t", str(python_dir),
-        "--upgrade"
-    ]
-    
-    try:
-        result = subprocess.run(cmd_with_deps, check=True, capture_output=True, text=True)
-        print("SUCCESS: Dependencies with sub-dependencies installed successfully!")
-    except subprocess.CalledProcessError as e:
-        print(f"ERROR: Failed to install dependencies with sub-deps: {e}")
         if e.stderr:
             print("Error output:")
             print(e.stderr)

@@ -4,6 +4,7 @@ Uses real Markov chains without NLTK dependencies.
 """
 
 import json
+import logging
 import os
 import random
 import re
@@ -18,6 +19,15 @@ from collections import defaultdict, Counter
 DEFAULT_BASE_URL = "https://invent.whileyou.work"
 MODELS_DIR = Path(__file__).parent.parent / "models"
 CACHE_DIR = MODELS_DIR / "cache"
+
+# Configure logging
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def get_base_url() -> str:
@@ -81,8 +91,11 @@ def download_model(model_name: str) -> Optional[str]:
                 return response.read().decode('utf-8')
             else:
                 return None
-    except Exception as e:
-        print(f"Failed to download model {model_name}: {e}")
+    except urllib.error.HTTPError as e:
+        print(f"HTTPError while downloading model '{model_name}' from {model_url}: {e.code} {e.reason}")
+        return None
+    except urllib.error.URLError as e:
+        print(f"URLError while downloading model '{model_name}' from {model_url}: {e.reason}")
         return None
 
 
@@ -146,7 +159,7 @@ async def list_models() -> Dict[str, Any]:
                 
                 return {"models": model_names}
     except Exception as e:
-        print(f"Failed to fetch model list: {e}")
+        logger.error(f"Failed to fetch model list from {index_url}: {e}", exc_info=True)
     
     # Fallback to known models
     return {
