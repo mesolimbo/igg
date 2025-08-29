@@ -1,2 +1,2 @@
-# Empty - using only Python standard library
-# All required functionality is implemented using built-in modules
+pandas>=1.5.0
+nltk>=3.8

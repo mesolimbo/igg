@@ -96,7 +96,7 @@ async def list_models() -> Dict[str, Any]:
         # Fallback to known models
         return {
             "base_url": base_url,
-            "models": ["sample", "bizboto", "brainstormer", "Inventions"]
+            "models": ["sample"]
         }
 
 

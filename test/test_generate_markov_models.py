@@ -3,6 +3,9 @@ from unittest.mock import patch, MagicMock
 import pandas as pd
 from collections import Counter, defaultdict
 
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 import generate_markov_models
 
 @pytest.fixture

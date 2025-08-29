@@ -1,4 +1,11 @@
 {
-  "domain": "your-subdomain.your-domain.com",
-  "certificateDomain": "your-subdomain.your-domain.com"
+  "mcp": {
+    "domain": "mcp.yourdomain.com",
+    "certificateDomain": "mcp.yourdomain.com"
+  },
+  "static_site": {
+    "domain": "static.yourdomain.com", 
+    "certificate_arn": "arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012",
+    "bucket_name": "your-bucket-name"
+  }
 }

@@ -1,5 +1,12 @@
+# Light dependencies for Lambda function code
+# Heavy dependencies (pandas, nltk) are provided by Lambda layer
+
+# MCP server dependencies (not needed in Lambda)
 mcp>=1.12.0
+
+# AWS SDK (provided by Lambda runtime, but included for local testing)
 boto3>=1.35.0
 botocore>=1.35.0
-pandas>=1.5.0
-nltk>=3.8
+
+# Note: pandas and nltk are provided by the Lambda layer
+# See lambda-layer/requirements.txt for heavy dependencies
