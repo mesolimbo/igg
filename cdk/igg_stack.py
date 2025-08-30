@@ -46,7 +46,7 @@ class IggStack(Stack):
         # Create the Lambda function (no layers needed for simplified version)
         lambda_function = lambda_.Function(
             self, "IggMcpFunction",
-            runtime=lambda_.Runtime.PYTHON_3_11,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="lambda_handler.lambda_handler",
             code=lambda_.Code.from_asset("../src"),
             timeout=Duration.seconds(60),
@@ -59,7 +59,7 @@ class IggStack(Stack):
         # Create the Lambda authorizer function
         authorizer_function = lambda_.Function(
             self, "IggAuthorizerFunction",
-            runtime=lambda_.Runtime.PYTHON_3_11,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="authorizer.lambda_handler",
             code=lambda_.Code.from_asset("../src"),
             timeout=Duration.seconds(10),
@@ -76,7 +76,7 @@ class IggStack(Stack):
         # Use custom resource to create certificate in us-east-1 regardless of stack region
         certificate_handler = lambda_.Function(
             self, "CertificateHandler",
-            runtime=lambda_.Runtime.PYTHON_3_11,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="index.handler",
             code=lambda_.Code.from_inline("""
 import boto3

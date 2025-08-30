@@ -49,7 +49,7 @@ class McpServerConstruct(Construct):
         # Create the main MCP Lambda function
         self.mcp_function = lambda_.Function(
             self, "McpFunction",
-            runtime=lambda_.Runtime.PYTHON_3_11,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="lambda_handler.lambda_handler",
             code=lambda_.Code.from_asset(source_code_path),
             timeout=Duration.seconds(60),
@@ -62,7 +62,7 @@ class McpServerConstruct(Construct):
         # Create the Lambda authorizer function
         self.authorizer_function = lambda_.Function(
             self, "McpAuthorizerFunction",
-            runtime=lambda_.Runtime.PYTHON_3_11,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="authorizer.lambda_handler",
             code=lambda_.Code.from_asset(source_code_path),
             timeout=Duration.seconds(10),
@@ -127,7 +127,7 @@ class McpServerConstruct(Construct):
         """Create SSL certificate in us-east-1 for API Gateway Edge."""
         certificate_handler = lambda_.Function(
             self, "CertificateHandler",
-            runtime=lambda_.Runtime.PYTHON_3_11,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="index.handler",
             code=lambda_.Code.from_inline("""
 import boto3

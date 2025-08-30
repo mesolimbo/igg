@@ -33,7 +33,7 @@ class ModelProcessorConstruct(Construct):
             self,
             "ModelProcessorDependencies", 
             code=lambda_.Code.from_asset(layer_path),
-            compatible_runtimes=[lambda_.Runtime.PYTHON_3_11],
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_12],
             description="Heavy dependencies for model processing (pandas, nltk)"
         )
 
@@ -41,7 +41,7 @@ class ModelProcessorConstruct(Construct):
         self.processor_function = lambda_.Function(
             self,
             "ModelProcessorFunction",
-            runtime=lambda_.Runtime.PYTHON_3_11,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="model_processor.lambda_handler",
             code=lambda_.Code.from_asset(source_code_path),
             layers=[dependencies_layer],
