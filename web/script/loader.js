@@ -73,7 +73,17 @@ function generateData(markovModels) {
         if (templateInput.value) {
             row.forEach((phrase, index) => {
                 const placeholder = `$${index + 1}`;
-                filledTemplate = filledTemplate.replace(placeholder, `<b>${phrase}</b>`);
+                // Escape phrase to prevent HTML injection inside <b>
+                const escapedPhrase = phrase.replace(/[<>&"']/g, function (c) {
+                    return ({
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '&': '&amp;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    })[c];
+                });
+                filledTemplate = filledTemplate.replace(placeholder, `<b>${escapedPhrase}</b>`);
             });
         } else {
             filledTemplate = row.join(' ');
@@ -86,7 +96,10 @@ function generateData(markovModels) {
     const outputElement = document.getElementById('output');
     outputElement.innerHTML = '';
     generatedData.forEach(line => {
-        outputElement.innerHTML += `<p>${line}</p>`;
+        // Create paragraph element and set its textContent to ensure escape
+        const p = document.createElement('p');
+        p.textContent = line;
+        outputElement.appendChild(p);
     });
 }
 
