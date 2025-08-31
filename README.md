@@ -19,38 +19,44 @@ The IGG (Idea Generator Generator) project generates creative ideas using Markov
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Web Frontend  │    │   MCP Server    │    │ AWS CDK Stack   │
 │                 │    │                 │    │                 │
-│ - Static Site   │    │ - Claude Code   │    │ - S3 Buckets    │
-│ - Model Browse  │    │ - AI Integration│    │ - API Gateway   │
-│ - Idea Gen      │    │ - Local Cache   │    │ - Lambda Funcs  │
+│ - Static Site   │    │ - API Gateway   │    │ - S3 Buckets    │
+│ - Model Browse  │    │ - Basic Auth    │    │ - API Gateway   │
+│ - Idea Gen      │    │ - Lambda Funcs  │    │ - Lambda Funcs  │
+│                 │    │ - Custom Domain │    │ - SSL Certs     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ## 📂 Project Structure
 
 ```
-├── src/                          # Python source code
-│   ├── mcp_server.py            # MCP server entry point
-│   ├── mcp_markov_models.py     # MCP Markov logic  
-│   ├── model_processor.py       # Lambda CSV processor
-│   └── generate_markov_models.py # Standalone utility
-├── cdk/                         # AWS CDK infrastructure
-│   ├── app.py                   # CDK application
-│   ├── constructs/              # Reusable CDK components
-│   │   ├── mcp_server_construct.py
-│   │   ├── static_site_construct.py  
-│   │   └── model_processor_construct.py
-│   └── stacks/                  # CDK stack definitions
-│       ├── mcp_stack.py         # MCP server infrastructure
-│       └── static_site_stack.py # Static site infrastructure
-├── test/                        # Unit tests
-├── web/                         # Frontend JavaScript
-└── models/cache/                # Local model cache
+├── src/                                  # Python source code
+│   ├── mcp_server.py                     # MCP server entry point
+│   ├── mcp_markov_models.py              # MCP Markov logic  
+│   ├── model_processor.py                # Lambda CSV processor
+│   └── generate_markov_models.py         # Standalone utility
+├── cdk/                                  # AWS CDK infrastructure
+│   ├── app.py                            # CDK application
+│   ├── custom_constructs/                # Reusable CDK components
+│   │   ├── mcp_server_construct.py       # MCP server infrastructure
+│   │   ├── static_site_construct.py      # Static site infrastructure
+│   │   └── model_processor_construct.py  # Lambda processor infrastructure
+│   └── stacks/                           # CDK stack definitions
+│       ├── mcp_stack.py                  # MCP server infrastructure
+│       └── static_site_stack.py          # Static site infrastructure
+├── test/                                 # Unit tests
+├── web/                                  # Frontend web interface
+│   ├── index.html                        # Static site frontend
+│   ├── samples/                          # Sample data files
+│   └── script/                           # Frontend JavaScript
+├── models/cache/                         # Local model cache
+├── lambda-layer/                         # Lambda dependencies layer
+└── layerator.py                          # Lambda layer builder script
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Python 3.11+** with Pipenv
+- **Python 3.12+** with Pipenv
 - **Node.js** and AWS CDK CLI (for infrastructure)
 - **AWS CLI** configured (for deployment)
 
@@ -68,18 +74,40 @@ pipenv run python src/mcp_server.py
 
 ### 2. MCP Integration with Claude Code
 
-Add to your MCP client configuration:
+After deploying the CDK stack, configure your MCP client using the deployed API Gateway endpoint:
+
 ```json
 {
   "mcpServers": {
     "igg-markov": {
-      "command": "pipenv",
-      "args": ["run", "python", "src/mcp_server.py"],
-      "cwd": "/path/to/igg"
+      "url": "https://mcp.yourdomain.com/",
+      "headers": {
+        "Authorization": "Basic <base64-encoded-credentials>"
+      }
     }
   }
 }
 ```
+
+**Getting the MCP endpoint URL and credentials:**
+```bash
+# Deploy and get outputs
+cd cdk && pipenv run cdk deploy IggMcpStack
+
+# The deployment will output:
+# - McpApiGatewayUrl: Direct API Gateway URL (works immediately)
+# - McpCustomDomainUrl: Custom domain URL (requires DNS setup)
+# - McpAuthSecretArn: Secret ARN for credentials
+
+# Get credentials from AWS Secrets Manager
+aws secretsmanager get-secret-value \
+  --secret-id <McpAuthSecretArn-from-output> \
+  --query SecretString --output text
+```
+
+**URL Options:**
+- **Quick setup**: Use `McpApiGatewayUrl` directly (no DNS required)
+- **Custom domain**: Use `McpCustomDomainUrl` after setting up DNS CNAME record
 
 ### 3. AWS Infrastructure Deployment
 
@@ -182,7 +210,7 @@ pipenv run pytest test/test_generate_markov_models.py -v
 3. Available immediately via MCP and web interface
 
 ### Lambda Layer Management
-The model processor uses a Lambda layer for heavy dependencies:
+The model processor uses a Lambda layer for heavy dependencies (pandas, nltk, numpy). The layer is built for Python 3.12:
 
 ```bash
 # Rebuild layer when dependencies change
@@ -198,7 +226,7 @@ pipenv run cdk deploy IggStaticSiteStack
 3. Add corresponding tests
 
 ### CDK Infrastructure Changes
-1. Modify constructs in `cdk/constructs/`
+1. Modify constructs in `cdk/custom_constructs/`
 2. Update stack definitions in `cdk/stacks/`
 3. Test with `pipenv run cdk diff`
 4. Deploy with `pipenv run cdk deploy`

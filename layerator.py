@@ -50,7 +50,7 @@ def main():
         "--no-deps",  # Don't install sub-dependencies automatically
         "--platform", "linux_x86_64",  # Lambda platform
         "--implementation", "cp",
-        "--python-version", "3.11",
+        "--python-version", "3.12",
         "--only-binary=:all:",  # Only use binary wheels
     ]
     
@@ -85,7 +85,7 @@ def main():
         "-t", str(python_dir),
         "--platform", "linux_x86_64",
         "--implementation", "cp", 
-        "--python-version", "3.11",
+        "--python-version", "3.12",
         "--only-binary=:all:",
     ]
     
