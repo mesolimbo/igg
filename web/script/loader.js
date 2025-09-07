@@ -96,9 +96,9 @@ function generateData(markovModels) {
     const outputElement = document.getElementById('output');
     outputElement.innerHTML = '';
     generatedData.forEach(line => {
-        // Create paragraph element and set its textContent to ensure escape
+        // Create paragraph element and set its innerHTML to render HTML tags
         const p = document.createElement('p');
-        p.textContent = line;
+        p.innerHTML = line;
         outputElement.appendChild(p);
     });
 }
