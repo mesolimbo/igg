@@ -53,11 +53,31 @@ generateButton.addEventListener('click', () => {
     }
 });
 
+// Escape RegExp special characters for literal matching
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 // Function to generate data using the Markov models
 function generateData(markovModels) {
     const numberOfRowsToGenerate = 10; // Adjust as needed
     const generatedData = [];
-    const template = templateInput.value || markovModels.map((_, index) => `$${index + 1}`).join(' ');
+    // Escape templateInput.value to prevent HTML injection
+    function escapeHTML(str) {
+        return str.replace(/[<>&"']/g, function (c) {
+            return ({
+                '<': '&lt;',
+                '>': '&gt;',
+                '&': '&amp;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[c];
+        });
+    }
+    const templateRaw = templateInput.value;
+    const template =
+        templateRaw
+            ? escapeHTML(templateRaw)
+            : markovModels.map((_, index) => `$${index + 1}`).join(' ');
 
     for (let i = 0; i < numberOfRowsToGenerate; i++) {
         const row = [];
@@ -83,7 +103,9 @@ function generateData(markovModels) {
                         "'": '&#39;'
                     })[c];
                 });
-                filledTemplate = filledTemplate.replace(placeholder, `<b>${escapedPhrase}</b>`);
+                // The template itself is escaped; only placeholders are replaced with HTML
+                // To replace **ALL** placeholder instances, use a global regex
+                filledTemplate = filledTemplate.replace(new RegExp(escapeRegExp(placeholder), 'g'), `<b>${escapedPhrase}</b>`);
             });
         } else {
             filledTemplate = row.join(' ');
