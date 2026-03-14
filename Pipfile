@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 boto3 = "==1.35.29"
-nltk = "==3.9.1"
+nltk = "==3.9.3"
 pandas = "==2.2.3"
 mcp = "==1.23.0"
 aws-cdk-lib = "==2.212.0"
