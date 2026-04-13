@@ -13,7 +13,7 @@ constructs = "==10.3.0"
 
 [dev-packages]
 coverage = "==7.6.4"
-pytest = "==8.3.3"
+pytest = "==9.0.3"
 
 [requires]
 python_version = "3.12"
