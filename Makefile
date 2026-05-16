@@ -1,4 +1,4 @@
-.PHONY: build layer synth deploy clean test help
+.PHONY: build layer synth deploy destroy clean test help
 
 # Default target
 help:
@@ -7,6 +7,7 @@ help:
 	@echo "  layer   - Build Lambda layer with dependencies"
 	@echo "  synth   - Synthesize CDK CloudFormation templates"
 	@echo "  deploy  - Deploy to AWS (depends on build)"
+	@echo "  destroy - Tear down all CDK stacks in AWS"
 	@echo "  clean   - Remove build artifacts"
 	@echo "  test    - Run tests"
 
@@ -30,6 +31,10 @@ build: layer synth
 # Deploy to AWS (depends on build)
 deploy: build
 	cd cdk && pipenv run npx cdk deploy --all --require-approval never
+
+# Tear down all CDK stacks in AWS
+destroy:
+	cd cdk && pipenv run npx cdk destroy --all --force
 
 # Clean build artifacts
 clean:
